@@ -207,16 +207,6 @@ Function Get-ExoCalendarEventAsDelegate {
             }
         }
 
-        # $result
-
-
-        # $result
-        ## Delete the calendar event by ID
-        # $cal_event | ForEach-Object {
-        # "[$($current_mailbox)]: Removing event from the user's calendar." | Write-Verbose
-        # Remove-MgUserEvent -UserId $current_mailbox -EventId $_.ID -ErrorAction Stop
-        # }
-
         # Cleanup permission
         "[$($current_mailbox)]: Removing [$($delegate_user)] permission to calendar." | Write-Verbose
         $null = Remove-MailboxFolderPermission -Identity "$($current_mailbox):\Calendar" -User $delegate_user -Confirm:$false

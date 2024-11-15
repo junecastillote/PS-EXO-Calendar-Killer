@@ -1,9 +1,9 @@
-Function Find-ExoCalendarEventAsDelegate {
+Function Get-ExoCalendarEventAsDelegate {
     [cmdletbinding()]
     param (
         [parameter(Mandatory)]
         [string[]]
-        $TargetMailboxId,
+        $MailboxId,
 
         [parameter(Mandatory, ParameterSetName = 'ByEventId')]
         [string]
@@ -115,8 +115,8 @@ Function Find-ExoCalendarEventAsDelegate {
         $search_filter = $filter_option_array
     }
 
-    for ($i = 0; $i -lt ($TargetMailboxId.Count) ; $i++) {
-        $current_mailbox = $TargetMailboxId[$i]
+    for ($i = 0; $i -lt ($MailboxId.Count) ; $i++) {
+        $current_mailbox = $MailboxId[$i]
         ## Test if the target user has a mailbox.
         try {
             $null = Get-Mailbox -Identity $current_mailbox -ErrorAction Stop
@@ -178,7 +178,8 @@ Function Find-ExoCalendarEventAsDelegate {
                 @{n = 'MailboxId'; e = { $current_mailbox } },
                 Subject, Categories,
                 @{n = 'Type'; e = { $(Format-String $_.Type) } },
-                @{n = 'Organizer'; e = { $_.Organizer.EmailAddress.Address } },
+                @{n = 'OrganizerEmail'; e = { $_.Organizer.EmailAddress.Address } },
+                @{n = 'OrganizerName'; e = { $_.Organizer.EmailAddress.Name } },
                 @{n = 'CreatedDateTime'; e = { Get-Date $_.CreatedDateTime } },
                 @{n = 'Start'; e = { (Get-Date $_.Start.DateTime) } },
                 @{n = 'StartTimeZone'; e = { ($_.Start.TimeZone) } },

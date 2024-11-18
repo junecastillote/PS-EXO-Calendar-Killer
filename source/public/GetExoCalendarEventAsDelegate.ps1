@@ -133,7 +133,20 @@ Function Get-ExoCalendarEventAsDelegate {
 
         ## Give your delegate user Editor permission to the target mailbox calendar folder.
         "[$($current_mailbox)]: Adding [$($delegate_user)] permission to calendar." | Write-Verbose
-        $null = Add-MailboxFolderPermission -Identity "$($current_mailbox):\Calendar" -User $delegate_user -AccessRights Editor
+        try {
+            $null = Add-MailboxFolderPermission -Identity "$($current_mailbox):\Calendar" -User $delegate_user -AccessRights Editor -ErrorAction Stop
+        }
+        catch {
+            <#Do this if a terminating exception happens#>
+            if ($_.Exception.Message -like "*Microsoft.Exchange.Management.StoreTasks.UserAlreadyExistsInPermissionEntryException*") {
+                Write-Verbose $_.Exception.Data.Values.Message
+            }
+            else {
+                Write-Error "Failed to add calendar permission. Cannot search this mailbox for events."
+                Write-Error $_.Exception.Message
+                Continue
+            }
+        }
 
         ## Define the filter. In this case, filter by event organizer name and subject.
         $searchSplat = @{
@@ -169,9 +182,8 @@ Function Get-ExoCalendarEventAsDelegate {
         }
 
         if ($cal_event.Count -gt 0) {
-            ## Preview the result
-            "[$($current_mailbox)]: Found $($cal_event.Count) calendar events." | Write-Verbose
-            # $result = $cal_event | ForEach-Object {
+            ## Return the result
+            "[$($current_mailbox)]: Found $($cal_event.Count) calendar event(s)." | Write-Verbose
             $cal_event | ForEach-Object {
                 $item = $_ | Select-Object `
                 @{n = 'EventId'; e = { $_.Id } },
@@ -183,14 +195,15 @@ Function Get-ExoCalendarEventAsDelegate {
                 @{n = 'CreatedDateTime'; e = { Get-Date $_.CreatedDateTime } },
                 @{n = 'Start'; e = { (Get-Date $_.Start.DateTime) } },
                 @{n = 'StartTimeZone'; e = { ($_.Start.TimeZone) } },
-                @{n = 'OriginalStart'; e = { (Get-Date $_.OriginalStart) } },
+                @{n = 'OriginalStart'; e = { $(if ($_.OriginalStart) { Get-Date $_.OriginalStart }) } },
                 @{n = 'OriginalStartTimeZone'; e = { ($_.OriginalStartTimeZone) } },
                 @{n = 'End'; e = { (Get-Date $_.End.DateTime) } },
                 @{n = 'EndTimeZone'; e = { ($_.End.TimeZone) } },
-                @{n = 'OriginalEnd'; e = { (Get-Date $_.OriginalEnd) } },
+                @{n = 'OriginalEnd'; e = { $(if ($_.OriginalEnd) { Get-Date $_.OriginalEnd }) } },
                 @{n = 'OriginalEndTimeZone'; e = { ($_.OriginalEndTimeZone) } },
                 @{n = 'LastModifiedDateTime'; e = { Get-Date $_.LastModifiedDateTime } },
-                @{n = 'Attendees'; e = { ($_.Attendees | ConvertTo-Json -Depth 5) } },
+                @{n = 'AttendeesFull'; e = { ($_.Attendees | ConvertTo-Json -Depth 5) } },
+                @{n = 'Attendees'; e = { $(($_.Attendees | ForEach-Object { $_.EmailAddress.Address } ) -join ";") } },
                 @{n = 'Recurrence'; e = { ($_.Recurrence.Pattern | ConvertTo-Json -Depth 5) } },
                 @{n = 'Content'; e = { ($_.Body.Content) } },
                 @{n = 'ContentType'; e = { ($_.Body.ContentType) } },
@@ -203,6 +216,11 @@ Function Get-ExoCalendarEventAsDelegate {
 
                 # Add custom type
                 $item.PSObject.TypeNames.Insert(0, 'PSEXOCalendarEvent')
+
+                $visible_properties = [string[]]@('EventId', 'MailboxId', 'OrganizerEmail', 'Attendees', 'Subject', 'Start', 'End')
+                [Management.Automation.PSMemberInfo[]]$default_properties = [System.Management.Automation.PSPropertySet]::new('DefaultDisplayPropertySet', $visible_properties )
+                $item | Add-Member -MemberType MemberSet -Name PSStandardMembers -Value $default_properties
+
                 $item
             }
         }

@@ -2,7 +2,7 @@ Function Remove-ExoCalendarEventAsDelegate {
     [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High', DefaultParameterSetName = "ByInputObject")]
     param(
         [Parameter(Mandatory, ValueFromPipeline, ParameterSetName = "ByInputObject")]
-        [PSCustomObject]  # Optionally specify a custom type if available
+        [System.Management.Automation.PSTypeName('PSEXOCalendarEvent')]  # Optionally specify a custom type if available
         $InputObject,
 
         [Parameter(Mandatory, ParameterSetName = "ById")]
@@ -14,10 +14,14 @@ Function Remove-ExoCalendarEventAsDelegate {
         $EventId
     )
     begin {
+
+        $delegate_user = (Get-MgContext).Account
+
         Write-Verbose "ParameterSet: $($PSCmdlet.ParameterSetName)"
 
         # Define the helper function here in the begin block
-        function Remove-CalendarEvent {
+        function RemoveUserCalendarEvent {
+            [CmdletBinding()]
             param (
                 [string] $UserId,
                 [string] $EventIdentifier
@@ -43,13 +47,26 @@ Function Remove-ExoCalendarEventAsDelegate {
                     throw "Input object is not of type PSEXOCalendarEvent. Received type: $($item.PSTypeNames -join ', ')"
                 }
 
+                if (!(AddCalendarPermission -MailboxId $item.MailboxId -DelegateId $delegate_user)) {
+                    Continue
+                }
+
                 # Extract properties and call helper function
-                Remove-CalendarEvent -UserId $item.MailboxId -EventIdentifier $item.EventId
+                RemoveUserCalendarEvent -UserId $item.MailboxId -EventIdentifier $item.EventId
+
+                RemoveCalendarPermission -MailboxId $item.MailboxId -DelegateId $delegate_user
             }
         }
         elseif ($PSCmdlet.ParameterSetName -eq 'ById') {
+
+            if (!(AddCalendarPermission -MailboxId $MailboxId)) {
+                Continue
+            }
+
             # Directly remove event using provided parameters
-            Remove-CalendarEvent -UserId $MailboxId -EventIdentifier $EventId
+            RemoveUserCalendarEvent -UserId $MailboxId -EventIdentifier $EventId
+
+            RemoveCalendarPermission -MailboxId $MailboxId -DelegateId $delegate_user
         }
     }
     end {}

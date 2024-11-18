@@ -1,4 +1,4 @@
-Function Confirm-DelegateRequirements {
+Function RequirementsCheck {
     [CmdletBinding()]
     param ()
 

@@ -19,7 +19,7 @@ PowerShell Module to find and delete orphaned calendar events
 
 ## Required Modules
 
-- [PowerShell EXO Calendar Killer Module]([https://github.com/junecastillote/PS-EXO-Calendar-Killer](https://github.com/junecastillote/PS-EXO-Calendar-Killer/archive/refs/heads/main.zip))
+- [PowerShell EXO Calendar Killer Module](https://github.com/junecastillote/PS-EXO-Calendar-Killer/archive/refs/heads/main.zip)
 - [Microsft Graph API PowerShell Module](https://learn.microsoft.com/en-us/powershell/microsoftgraph/installation)
 - [Exchange Online Management (EXOV3) PowerShell Module](https://learn.microsoft.com/en-us/powershell/exchange/exchange-online-powershell-v2?view=exchange-ps#install-and-maintain-the-exchange-online-powershell-module)
 

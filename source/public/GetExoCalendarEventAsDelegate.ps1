@@ -154,11 +154,13 @@ Function Get-ExoCalendarEventAsDelegate {
     }
     catch {
         $_.Exception.Message | Write-Error
+        RemoveCalendarPermission -MailboxId $MailboxId -DelegateId $delegate_user
         return $null
     }
 
     if ($cal_event.Count -lt 1) {
         "[$($MailboxId)]: Found 0 calendar events." | Write-Verbose
+        RemoveCalendarPermission -MailboxId $MailboxId -DelegateId $delegate_user
         return $null
     }
 
@@ -206,11 +208,7 @@ Function Get-ExoCalendarEventAsDelegate {
 
             $item
         }
+        ## Remove calendar permission
+        RemoveCalendarPermission -MailboxId $MailboxId -DelegateId $delegate_user
     }
-
-    # Cleanup permission
-    RemoveCalendarPermission -MailboxId $MailboxId -DelegateId $delegate_user
-    # "[$($MailboxId)]: Removing [$($delegate_user)] permission to calendar." | Write-Verbose
-    # $null = Remove-MailboxFolderPermission -Identity "$($MailboxId):\Calendar" -User $delegate_user -Confirm:$false
-    # }
 }

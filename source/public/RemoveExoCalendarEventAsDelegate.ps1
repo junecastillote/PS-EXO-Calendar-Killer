@@ -51,9 +51,7 @@ Function Remove-ExoCalendarEventAsDelegate {
                     Continue
                 }
 
-                # Extract properties and call helper function
                 RemoveUserCalendarEvent -UserId $item.MailboxId -EventIdentifier $item.EventId
-
                 RemoveCalendarPermission -MailboxId $item.MailboxId -DelegateId $delegate_user
             }
         }
@@ -65,7 +63,6 @@ Function Remove-ExoCalendarEventAsDelegate {
 
             # Directly remove event using provided parameters
             RemoveUserCalendarEvent -UserId $MailboxId -EventIdentifier $EventId
-
             RemoveCalendarPermission -MailboxId $MailboxId -DelegateId $delegate_user
         }
     }

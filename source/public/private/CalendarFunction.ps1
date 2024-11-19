@@ -7,7 +7,7 @@ Function AddCalendarPermission {
     )
 
     ## Give yourself delegate user Editor permission to the target mailbox calendar folder.
-    "[$($MailboxId)]: Adding [$($DelegateId)] permission to calendar." | Write-Verbose
+    "[$($MailboxId)]: Adding [$($DelegateId)] Editor permission to calendar." | Write-Verbose
     try {
         $null = Add-MailboxFolderPermission -Identity "$($MailboxId):\Calendar" -User $DelegateId -AccessRights Editor -ErrorAction Stop
         return $true
@@ -34,6 +34,6 @@ Function RemoveCalendarPermission {
     )
 
     # Cleanup permission
-    "[$($MailboxId)]: Removing [$($DelegateId)] permission to calendar." | Write-Verbose
-    $null = Remove-MailboxFolderPermission -Identity "$($MailboxId):\Calendar" -User $DelegateId -Confirm:$false -WarningAction SilentlyContinue
+    "[$($MailboxId)]: Removing [$($DelegateId)] calendar permission." | Write-Verbose
+    $null = Remove-MailboxFolderPermission -Identity "$($MailboxId):\Calendar" -User $DelegateId -Confirm:$false
 }

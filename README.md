@@ -136,7 +136,7 @@ Specify whether to perform an exact match of the subject.
 
 For example:
 
-`-Subject "Hello"` will search an exact match of the subject "`Hello`" by default. 
+`-Subject "Hello"` will search an exact match of the subject "`Hello`" by default.
 
 To perform an approximate subject match search, specify the `-Subject "Hello" -ExactSubjectMatch:$false`
 
@@ -150,7 +150,7 @@ To perform an approximate subject match search, specify the `-Subject "Hello" -E
 
 ### Example - Search the target mailbox calendar events by organizer name
 
-> Note: This search works only if the organizer still exists in the organization / directory. If not, the result will return this error - `[ErrorItemNotFound] | the specified object was not found in the store.`
+> Note: This search may not work if the organizer no longer exists in the organization / directory. In which case, change your query to Subject match instead.
 
 This example searches the calender for events organized by the user `John Doe` and stores the result to the `$calendar_events` variable.
 

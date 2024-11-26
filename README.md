@@ -136,9 +136,9 @@ Specify whether to perform an exact match of the subject.
 
 For example:
 
-`-Subject "Hello"` will search for matches that include the string "`Hello`" by default. The result my include "`Hello, World`", "`123 hello 123`", etc.
+`-Subject "Hello"` will search an exact match of the subject "`Hello`" by default. 
 
-To perform an exact subject match search, specify the `-Subject "Hello" -ExactSubjectMatch:$true`
+To perform an approximate subject match search, specify the `-Subject "Hello" -ExactSubjectMatch:$false`
 
 |                            |         |
 | -------------------------- | ------- |
@@ -146,9 +146,11 @@ To perform an exact subject match search, specify the `-Subject "Hello" -ExactSu
 | Required                   | False   |
 | Accept pipeline input      | False   |
 | Accept wildcard characters | False   |
-| Default value              | False   |
+| Default value              | True    |
 
 ### Example - Search the target mailbox calendar events by organizer name
+
+> Note: This search works only if the organizer still exists in the organization / directory. If not, the result will return this error - `[ErrorItemNotFound] | the specified object was not found in the store.`
 
 This example searches the calender for events organized by the user `John Doe` and stores the result to the `$calendar_events` variable.
 

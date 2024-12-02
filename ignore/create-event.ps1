@@ -1,5 +1,7 @@
+
+
 $params = @{
-    subject               = "Is this recurring?"
+    subject               = "Macy's Birthday"
     body                  = @{
         contentType = "HTML"
         content     = "Does noon time work for you?"
@@ -22,8 +24,8 @@ $params = @{
         }
         range   = @{
             type      = "endDate"
-            startDate = "2024-05-01"
-            endDate   = "2024-11-09"
+            startDate = "2024-12-25"
+            endDate   = "2024-12-26"
         }
     }
     location              = @{
@@ -32,15 +34,8 @@ $params = @{
     attendees             = @(
         @{
             emailAddress = @{
-                address = "dummy_user@poshlab.xyz"
-                name    = "Dummy User"
-            }
-            type         = "required"
-        }
-        @{
-            emailAddress = @{
-                address = "mailer365@poshlab.xyz"
-                name    = "Mailer365"
+                address = "june@poshlab.xyz"
+                name    = "June Castillote"
             }
             type         = "required"
         }
@@ -48,4 +43,7 @@ $params = @{
     allowNewTimeProposals = $true
 }
 
-New-MgUserEvent -UserId mailer365@poshlab1.onmicrosoft.com -BodyParameter $params
+$null = New-MgUserEvent -UserId mailer365@poshlab.xyz -BodyParameter $params
+
+
+# get-exoCalendarEventAsDelegate -MailboxId mailer365@poshlab.xyz -OutVariable calendar_events -Subject "Macy''s Birthday" -Verbose | remove-ExoCalendarEventAsDelegate -Verbose

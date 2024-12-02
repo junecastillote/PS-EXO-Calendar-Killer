@@ -35,5 +35,10 @@ Function RemoveCalendarPermission {
 
     # Cleanup permission
     "[$($MailboxId)]: Removing [$($DelegateId)] calendar permission." | Write-Verbose
-    $null = Remove-MailboxFolderPermission -Identity "$($MailboxId):\Calendar" -User $DelegateId -Confirm:$false
+    try {
+        $null = Remove-MailboxFolderPermission -Identity "$($MailboxId):\Calendar" -User $DelegateId -Confirm:$false -ErrorAction Stop
+    }
+    catch {
+
+    }
 }

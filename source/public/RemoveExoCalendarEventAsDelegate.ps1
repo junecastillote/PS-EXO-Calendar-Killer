@@ -1,8 +1,10 @@
+# Function to remove calendar event
 Function Remove-ExoCalendarEventAsDelegate {
-    [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High', DefaultParameterSetName = "ByInputObject")]
+    [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = "High" , DefaultParameterSetName = "ByInputObject")]
     param(
         [Parameter(Mandatory, ValueFromPipeline, ParameterSetName = "ByInputObject")]
-        [System.Management.Automation.PSTypeName('PSEXOCalendarEvent')]  # Optionally specify a custom type if available
+        [ValidateNotNullOrEmpty()]
+        [System.Management.Automation.PSTypeName('PSEXOCalendarEvent')]
         $InputObject,
 
         [Parameter(Mandatory, ParameterSetName = "ById")]
@@ -14,27 +16,28 @@ Function Remove-ExoCalendarEventAsDelegate {
         $EventId
     )
     begin {
-
-        $delegate_user = (Get-MgContext).Account
-
         Write-Verbose "ParameterSet: $($PSCmdlet.ParameterSetName)"
 
-        # Define the helper function here in the begin block
-        function RemoveUserCalendarEvent {
-            [CmdletBinding()]
+        # Get the MS Graph logged in UPN value.
+        $delegate_user = (Get-MgContext).Account
+
+        # Initialize an arraylist object to hold mailboxid and eventid values.
+        $event_to_remove = [System.Collections.ArrayList]@()
+
+        Function AddToUserEventCollection {
             param (
-                [string] $UserId,
-                [string] $EventIdentifier
+                $MailboxId,
+                $EventId
             )
-            if ($PSCmdlet.ShouldProcess($UserId, "Remove calendar event [$EventIdentifier]")) {
-                try {
-                    Remove-MgUserEvent -UserId $UserId -EventId $EventIdentifier -ErrorAction Stop
-                    Write-Verbose "Successfully removed calendar event [$EventIdentifier] for user [$UserId]."
-                }
-                catch {
-                    Write-Error "Failed to remove event [$EventIdentifier] for user [$UserId]: $_"
-                }
-            }
+
+            $null = $event_to_remove.Add(
+                [pscustomobject](
+                    [ordered]@{
+                        MailboxId = $MailboxId
+                        EventId   = $EventId
+                    }
+                )
+            )
         }
     }
 
@@ -46,25 +49,55 @@ Function Remove-ExoCalendarEventAsDelegate {
                 if ($item.PSTypeNames -notcontains 'PSEXOCalendarEvent') {
                     throw "Input object is not of type PSEXOCalendarEvent. Received type: $($item.PSTypeNames -join ', ')"
                 }
-
-                if (!(AddCalendarPermission -MailboxId $item.MailboxId -DelegateId $delegate_user)) {
-                    Continue
-                }
-
-                RemoveUserCalendarEvent -UserId $item.MailboxId -EventIdentifier $item.EventId
-                RemoveCalendarPermission -MailboxId $item.MailboxId -DelegateId $delegate_user
+                AddToUserEventCollection $item.MailboxId $item.EventId
             }
         }
         elseif ($PSCmdlet.ParameterSetName -eq 'ById') {
-
-            if (!(AddCalendarPermission -MailboxId $MailboxId)) {
-                Continue
-            }
-
-            # Directly remove event using provided parameters
-            RemoveUserCalendarEvent -UserId $MailboxId -EventIdentifier $EventId
-            RemoveCalendarPermission -MailboxId $MailboxId -DelegateId $delegate_user
+            AddToUserEventCollection $MailboxId $EventId
         }
     }
-    end {}
+    end {
+
+        for ($i = 0; $i -lt $event_to_remove.Count; $i++) {
+            $item = $event_to_remove[$i]
+            if ($PSCmdlet.ShouldProcess($($item.MailboxId), "Remove calendar event [$($item.EventId)]")) {
+                try {
+                    if (!$current_mailbox_id) {
+                        $current_mailbox_id = $item.MailboxId
+                        if (!(AddCalendarPermission -MailboxId $item.MailboxId -DelegateId $delegate_user)) {
+                            Continue
+                        }
+                    }
+
+                    if ($current_mailbox_id -ne $item.MailboxId) {
+                        RemoveCalendarPermission -MailboxId $current_mailbox_id -DelegateId $delegate_user
+                        $current_mailbox_id = $item.MailboxId
+                        Write-Verbose "Current Mailbox = $(($current_mailbox_id).ToUpper())"
+                        if (!(AddCalendarPermission -MailboxId $item.MailboxId -DelegateId $delegate_user)) {
+                            Continue
+                        }
+                    }
+
+                    # Remove the calendar event
+                    try {
+                        Remove-MgUserEvent -UserId $item.MailboxId -EventId $item.EventId -ErrorAction Stop
+                        Write-Verbose "[$($item.MailboxId)]: Successfully removed calendar event [$($item.EventId)]."
+                    }
+                    catch {
+                        Write-Error "[$($item.MailboxId)]: Failed to remove the calendar event."
+                        Write-Error "$($_.Exception.Message)"
+                    }
+
+                    # Remove calendar folder permission if it's the last item in the array.
+                    if ($i -eq ($event_to_remove.Count - 1)) {
+                        RemoveCalendarPermission -MailboxId $current_mailbox_id -DelegateId $delegate_user
+                    }
+                }
+                catch {
+                    Write-Error "[$($item.MailboxId)]: Failed to remove event [$($item.EventId)]."
+                    Write-Error "$($_.Exception.Message)"
+                }
+            }
+        }
+    }
 }

@@ -1,3 +1,4 @@
+# Function to get calendar event
 Function Get-ExoCalendarEventAsDelegate {
     [cmdletbinding()]
     param (
@@ -129,11 +130,6 @@ Function Get-ExoCalendarEventAsDelegate {
         return $null
     }
 
-    ## Give yourself delegate user Editor permission to the target mailbox calendar folder.
-    if (!(AddCalendarPermission -MailboxId $MailboxId -DelegateId $delegate_user)) {
-        return $null
-    }
-
     ## Define the filter. In this case, filter by event organizer name and subject.
     $searchSplat = @{}
 
@@ -144,13 +140,20 @@ Function Get-ExoCalendarEventAsDelegate {
     if ($search_filter) {
         $searchSplat.Add('Filter', $search_filter)
         $searchSplat.Add('All', $true)
-        "Filter = $search_filter" | Write-Verbose
+        "[$($MailboxId)]: Filter = $search_filter" | Write-Verbose
+    }
+
+    ## Give yourself delegate user Editor permission to the target mailbox calendar folder.
+    if (!(AddCalendarPermission -MailboxId $MailboxId -DelegateId $delegate_user)) {
+        return $null
     }
 
     ## Get all calendar events based on the given filter and store the result (if any) to the $cal_event variable.
     "[$($MailboxId)]: Searching calendar." | Write-Verbose
     try {
         $cal_event = @(Get-MgUserEvent -UserId $MailboxId @searchSplat -ErrorAction Stop)
+        RemoveCalendarPermission -MailboxId $MailboxId -DelegateId $delegate_user
+
     }
     catch {
         $_.Exception.Message | Write-Error
@@ -160,7 +163,6 @@ Function Get-ExoCalendarEventAsDelegate {
 
     if ($cal_event.Count -lt 1) {
         "[$($MailboxId)]: Found 0 calendar events." | Write-Verbose
-        RemoveCalendarPermission -MailboxId $MailboxId -DelegateId $delegate_user
         return $null
     }
 
@@ -208,7 +210,5 @@ Function Get-ExoCalendarEventAsDelegate {
 
             $item
         }
-        ## Remove calendar permission
-        RemoveCalendarPermission -MailboxId $MailboxId -DelegateId $delegate_user
     }
 }

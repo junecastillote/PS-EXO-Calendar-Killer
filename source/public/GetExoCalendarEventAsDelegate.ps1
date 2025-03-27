@@ -204,7 +204,7 @@ Function Get-ExoCalendarEventAsDelegate {
             # Add custom type
             $item.PSObject.TypeNames.Insert(0, 'PSEXOCalendarEvent')
 
-            $visible_properties = [string[]]@('EventId', 'CreatedDateTime', 'MailboxId', 'Organizer', 'Attendees', 'Subject', 'Start', 'End')
+            $visible_properties = [string[]]@('EventId', 'Type', 'CreatedDateTime', 'MailboxId', 'Organizer', 'Attendees', 'Subject', 'Start', 'End')
             [Management.Automation.PSMemberInfo[]]$default_properties = [System.Management.Automation.PSPropertySet]::new('DefaultDisplayPropertySet', $visible_properties )
             $item | Add-Member -MemberType MemberSet -Name PSStandardMembers -Value $default_properties
 
